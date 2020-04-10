@@ -11,7 +11,7 @@
 
 
 global $post;
-//show metabox in post editing page
+//muestro el metabox 
 add_action('add_meta_boxes','jaf_add_metabox');
 
 //save the metabox data, cuando le damos a aztualizar el post o la pagina 
@@ -73,11 +73,12 @@ function jaf_mv_save_data($post_id){       //recive el parametro de id del artic
     if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ){
         return;
     }
-
+        //compruebo que tenga permiso para editar
     if( !current_user_can( 'edit_post' ) ){
         return;
     } */
 
+    //si modifica alguno de los imput actualizo los datos
     if( isset( $_POST['descripcion'] ) || isset( $_POST['nombre'] ) ){
 
         update_post_meta( $post_id, 'description', esc_attr( $_POST['descripcion'] ) );
