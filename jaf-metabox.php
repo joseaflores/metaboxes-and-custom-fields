@@ -11,24 +11,23 @@
 
 
 global $post;
-//muestro el metabox 
-add_action('add_meta_boxes','jaf_add_metabox');
 
-//save the metabox data, cuando le damos a aztualizar el post o la pagina 
-//que guarde los datos de nuestro metabox
-add_action('save_post', 'jaf_mv_save_data');
 
+// Función para agregar un nuevo metabox
 function jaf_add_metabox(){
 
-    add_meta_box('jaf_description',' Descripción de tu grupo','jaf_mvx_description', 'post');
+    add_meta_box('jaf_description',' Descripción de tu grupo','jaf_add_fields_to_description', 'post');
 }
+add_action('add_meta_boxes','jaf_add_metabox');
+// Añado el metabox al hook 
 
-//registro los campos del metabox
-function jaf_mvx_description(){
+
+// Función para registrar los campos del metabox
+function jaf_add_fields_to_description(){
 
     $values = get_post_custom( $post->ID );
-    $jaf_valor = esc_attr($values['description'][0]); //recojo los valores anteriores si los hay
-    $jaf_valor_text = esc_attr($values['nombre'][0]);
+    $jaf_desc = esc_attr($values['description'][0]); //recojo los valores anteriores si los hay
+    $jaf_name = esc_attr($values['nombre'][0]);
      
     //muestro los campos por medio de una tabla con clases de wordpress
     echo '
@@ -40,7 +39,7 @@ function jaf_mvx_description(){
                 </th>
                 <td>
                     <p>
-                        <textarea rows="3" cols="30" id="descripcion" class="widefat" name="descripcion">'.$jaf_valor.'</textarea> 
+                        <textarea rows="3" cols="30" id="descripcion" class="widefat" name="descripcion">'.$jaf_desc.'</textarea> 
                     </p>
                     <p>
                         Describe tu grupo de manera sencilla para que los demás se aclaren.
@@ -53,7 +52,7 @@ function jaf_mvx_description(){
                 </th>
                 <td>
                     <p>
-                        <input type="text" id="nombre" value="'.$jaf_valor_text.'">
+                        <input type="text" id="nombre" name="nombre" value="'.$jaf_name.'">
                     </p>
                     <p>
                         Quien va a dirigir el grupo.
@@ -67,27 +66,54 @@ function jaf_mvx_description(){
 
 }
 
-function jaf_mv_save_data($post_id){       //recive el parametro de id del articulo
 
-   /*  //compruebo que no guarde con auto salvado
+// Funcion para guardar los datos de los campos personalizados
+function jaf_save_data($post_id){       //recive el parametro de id del articulo
+
+        // Si se ejecuta auto salvado salgo de la función
     if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ){
-        return;
+         return;
     }
-        //compruebo que tenga permiso para editar
+         // Si no tiene permiso para editar salgo de la función
     if( !current_user_can( 'edit_post' ) ){
-        return;
-    } */
+         return;
+    }
 
     //si modifica alguno de los imput actualizo los datos
     if( isset( $_POST['descripcion'] ) || isset( $_POST['nombre'] ) ){
-
         update_post_meta( $post_id, 'description', esc_attr( $_POST['descripcion'] ) );
         update_post_meta( $post_id, 'nombre', esc_attr( $_POST['nombre'] ) );
-     /*    update_post_meta($post_id, $meta_key, $meta_value, $prev_value) */
-
     }
+    
+
+                    
+                //Y para capturar y grabar los datos sería más seguro así:
+                /* if ( isset( $_POST ) ) { 
+                $description = sanitize_text_field( $_POST['description']); 
+                $nombre = sanitize_text_field( $_POST['nombre']); 
+                update_post_meta( $post_id, '_description', $description ); 
+                update_post_meta( $post_id, '_nombre', $nombre ); 
+                
+                //update_post_meta($post_id, $meta_key, $meta_value, $prev_value)
+                
+            } */
+}
+add_action('save_post', 'jaf_save_data');
 
 
+
+//función para mostrar los custom fields en el post
+add_filter( 'the_content', 'jaf_show_custom_fields'); 
+ 
+function jaf_show_custom_fields( $content ) { 
+ $custom_fields = get_post_custom(); 
+ if ( isset( $custom_fields['_descripcion'] ) && isset( $custom_fields['_nombre']) ) { 
+  $description = esc_html ( $custom_fields['_descripcion'][0] ); 
+  $nombre = esc_html ( $custom_fields['_nombre'][0] ); 
+  $content .= '<p> Descripción: ' . $description . '</p>'; 
+  $content .= '<p> Nombre: ' . $nombre . '</p>'; 
+ } 
+ return $content; 
 }
 
 
